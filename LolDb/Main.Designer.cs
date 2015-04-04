@@ -32,7 +32,6 @@
             this.BtnToggleDownload = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.JobIdTimer = new System.Windows.Forms.Timer(this.components);
-            this.GameDataTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // BtnToggleDownload
@@ -51,16 +50,12 @@
             this.button1.Size = new System.Drawing.Size(141, 23);
             this.button1.TabIndex = 0;
             this.button1.Text = "Write Data To File";
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // JobIdTimer
             // 
             this.JobIdTimer.Interval = 300000;
             this.JobIdTimer.Tick += new System.EventHandler(this.JobIdTimer_Tick);
-            // 
-            // GameDataTimer
-            // 
-            this.GameDataTimer.Interval = 20000;
-            this.GameDataTimer.Tick += new System.EventHandler(this.GameDataTimer_Tick);
             // 
             // Main
             // 
@@ -80,7 +75,6 @@
         private System.Windows.Forms.Button BtnToggleDownload;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Timer JobIdTimer;
-        private System.Windows.Forms.Timer GameDataTimer;
     }
 }
 

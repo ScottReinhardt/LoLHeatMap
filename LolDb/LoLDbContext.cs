@@ -18,6 +18,7 @@ namespace LolDb
     {
         [Key]
         public int Id { get; set; }
+        public int MatchToDownload { get; set; }
         public DateTime StartQueringTime { get; set; }
         public bool Downloaded { get; set; }
     }
@@ -31,10 +32,10 @@ namespace LolDb
         {
             try
             {
-                var timeToStartQuerying = DateTime.Now.AddHours(1);
+                var timeToStartQuerying = DateTime.Now.AddMinutes(5);
                 _Db.GameData.AddRange(ids.Select(i => new GameData
                 {
-                    Id = i,
+                    MatchToDownload = i,
                     StartQueringTime = timeToStartQuerying,
                 }));
                 await _Db.SaveChangesAsync();
@@ -46,11 +47,11 @@ namespace LolDb
             
         }
 
-        internal static async Task<GameData> GetGameData()
+        internal static async Task<List<Match>> GetAllGameData()
         {
             try
             {
-                return await _Db.GameData.SqlQuery("SELECT * FROM dbo.GameDatas WHERE StartQueringTime < GETDATE() ORDER BY NEWID()").FirstAsync();
+                return await _Db.Matches.Include(m => m.timeline).ToListAsync();
             }
             catch (Exception e)
             {
@@ -60,6 +61,20 @@ namespace LolDb
             
         }
 
+        internal static async Task<GameData> GetRandomGameData()
+        {
+            try
+            {
+                return await _Db.GameData.SqlQuery("SELECT * FROM dbo.GameDatas WHERE StartQueringTime < GETDATE() AND Downloaded = 0 ORDER BY NEWID()").FirstOrDefaultAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return null;
+            }
+
+        }
+
         internal async static void SaveMatch(Match match)
         {
             try
@@ -67,9 +82,9 @@ namespace LolDb
                 _Db.Matches.Add(match);
                 await _Db.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-
+                Console.WriteLine(e.Message);
             }
 
         }

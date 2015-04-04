@@ -1,35 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace LoLJson
 {
     public class Parse
     {
-        public static IEnumerable<Point> GetPoints(string fileName)
+        public static async Task<IEnumerable<Point>> GetPoints(string fileName)
         {
-            var points = GetAllPoints(fileName);
-
-            return GroupPoints(points, points.Count());
+            return await GetAllPoints(fileName);
         }
 
-        public static IEnumerable<Point> GetAllPoints(string fileName)
+        public async static Task<IEnumerable<Point>> GetAllPoints(string fileName)
         {
-            var points = new List<Point>();
-            var data = File.ReadAllLines(fileName);
-
-            points.AddRange(data.Select(l =>
-            {
-                var split = l.Split(' ').Select(int.Parse).ToArray();
-                return new Point(split[0], split[1], split[2]);
-            }));
-
+            var points = await JsonConvert.DeserializeObjectAsync<List<Point>>(File.ReadAllText(fileName));
 
             return points;
         }
 
-        private static IEnumerable<Point> GroupPoints(IEnumerable<Point> ungroupedPoints, int matches)
+        public static IEnumerable<Point> GroupPoints(IEnumerable<Point> ungroupedPoints, int matches)
         {
             var points = new List<Point>();
             foreach (var pointGroup in ungroupedPoints.GroupBy(p => new { p.X, p.Y }))
@@ -46,17 +37,17 @@ namespace LoLJson
 
     public class Point
     {
-        public Point(Position p, IEnumerable<int?> playerInts)
+        public Point(Event e)
         {
-            X = p.x;
-            Y = p.y;
-            if (playerInts == null)
+            X = e.position.x;
+            Y = e.position.y;
+            if (e.assistingParticipantIds == null)
             {
                 PlayerCount = 1;
             }
             else
             {
-                PlayerCount = 1 + playerInts.Count();
+                PlayerCount = 1 + e.assistingPlayerCount;
             }
         }
 
@@ -65,6 +56,11 @@ namespace LoLJson
             X = x;
             Y = y;
             PlayerCount = count;
+        }
+
+        public Point()
+        {
+            
         }
 
         public int X;

@@ -1,6 +1,11 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LoLJson;
+using SharpMap;
+using SharpMap.Data;
+using SharpMap.Data.Providers;
 using SharpMap.Layers;
 
 namespace LoLHeatMap
@@ -27,16 +32,17 @@ namespace LoLHeatMap
             InitializeComponent();
         }
 
-        public SharpMap.Map InitializeMap(string fileName)
+        public async Task<Map> InitializeMap(string fileName)
         {
             var fdt = GetRealFeatureDataTable();
-            FillRealDataTable(fdt, fileName);
 
-            var p = new SharpMap.Data.Providers.GeometryFeatureProvider(fdt);
+            await Task.Factory.StartNew(() => FillRealDataTable(fdt, fileName));
+            
+            var p = new GeometryFeatureProvider(fdt);
 
 
-            var m = new SharpMap.Map();
-            Image image = Image.FromFile("Rift.png");
+            var m = new Map();
+            Image image = Image.FromFile(@"Resources\Rift.png");
             var backgroundLayer = new GdiImageLayer("Background Image", image);
 
             var l = new HeatLayer(p, "Data", .5F) { LayerName = "HEAT" };
@@ -52,24 +58,25 @@ namespace LoLHeatMap
             return m;
         }
 
-        private static SharpMap.Data.FeatureDataTable GetRealFeatureDataTable()
+        private static FeatureDataTable GetRealFeatureDataTable()
         {
-            var res = new SharpMap.Data.FeatureDataTable();
+            var res = new FeatureDataTable();
             res.Columns.Add("Oid", typeof(uint));
             res.Columns.Add("Data", typeof(int));
 
             return res;
         }
 
-        private static void FillRealDataTable(SharpMap.Data.FeatureDataTable table, string fileName)
+        private static async void FillRealDataTable(FeatureDataTable table, string fileName)
         {
             table.BeginLoadData();
             var factory = GeoAPI.GeometryServiceProvider.Instance.CreateGeometryFactory(4326);
 
             uint id = 0;
-            foreach (var data in PointData(fileName))
+            var points = await PointData(fileName);
+            foreach (var data in points)
             {
-                var row = (SharpMap.Data.FeatureDataRow)table.LoadDataRow(new object[] { id++, data.PlayerCount }, System.Data.LoadOption.OverwriteChanges);
+                var row = (FeatureDataRow)table.LoadDataRow(new object[] { id++, data.PlayerCount }, System.Data.LoadOption.OverwriteChanges);
                 row.Geometry = factory.CreatePoint(new GeoAPI.Geometries.Coordinate(TranslateX(data.X), TranslateY(data.Y)));
                 
             }
@@ -86,15 +93,15 @@ namespace LoLHeatMap
             return (y - AbsoluteMinY) / (MaxY - MinY) * (MapMaxY - MapMinY);
         }
 
-        private static System.Collections.Generic.IEnumerable<LoLJson.Point> PointData(string fileName)
+        private static async Task<IEnumerable<LoLJson.Point>> PointData(string fileName)
         {
-            return Parse.GetPoints(fileName);
+            return await Parse.GetPoints(fileName);
         }
 
-        private void BtnLoadData_Click(object sender, System.EventArgs e)
+        private async void BtnLoadData_Click(object sender, System.EventArgs e)
         {
-            string fileName = "";
-            mapBox1.Map = InitializeMap(fileName);
+            string fileName = "data.lol";
+            mapBox1.Map = await InitializeMap(fileName);
             mapBox1.ZoomToPointer = false;
             mapBox1.EnableShiftButtonDragRectangleZoom = true;
             mapBox1.Refresh();
