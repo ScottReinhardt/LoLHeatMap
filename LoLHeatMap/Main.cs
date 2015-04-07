@@ -36,8 +36,8 @@ namespace LoLHeatMap
         {
             var fdt = GetRealFeatureDataTable();
 
-            await Task.Factory.StartNew(() => FillRealDataTable(fdt, fileName));
-            
+            //await Task.Run(() => FillRealDataTable(fdt, fileName));
+            await FillRealDataTable(fdt, fileName);
             var p = new GeometryFeatureProvider(fdt);
 
 
@@ -45,15 +45,21 @@ namespace LoLHeatMap
             Image image = Image.FromFile(@"Resources\Rift.png");
             var backgroundLayer = new GdiImageLayer("Background Image", image);
 
-            var l = new HeatLayer(p, "Data", .5F) { LayerName = "HEAT" };
+            var l = new HeatLayer(p, "Data") { LayerName = "HEAT" };
             m.BackgroundLayer.Add(backgroundLayer);
+
+            var ctfac = new ProjNet.CoordinateSystems.Transformations.CoordinateTransformationFactory();
+            l.CoordinateTransformation =
+                ctfac.CreateFromCoordinateSystems(ProjNet.CoordinateSystems.GeographicCoordinateSystem.WGS84,
+                                                  ProjNet.CoordinateSystems.ProjectedCoordinateSystem.WebMercator);
+
             m.Layers.Add(l);
             l.ZoomMin = 0;
             l.ZoomMax = m.GetExtents().Width;
             l.OpacityMax = 0.5f;
             l.OpacityMin = 0.9f;
             
-            l.HeatColorBlend = HeatLayer.Fire;
+            l.HeatColorBlend = HeatLayer.Classic;
             m.ZoomToBox(backgroundLayer.Envelope);
             return m;
         }
@@ -67,10 +73,10 @@ namespace LoLHeatMap
             return res;
         }
 
-        private static async void FillRealDataTable(FeatureDataTable table, string fileName)
+        private static async Task FillRealDataTable(FeatureDataTable table, string fileName)
         {
             table.BeginLoadData();
-            var factory = GeoAPI.GeometryServiceProvider.Instance.CreateGeometryFactory(4326);
+            var factory = GeoAPI.GeometryServiceProvider.Instance.CreateGeometryFactory();
 
             uint id = 0;
             var points = await PointData(fileName);

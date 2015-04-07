@@ -28,10 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.BtnToggleDownload = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.JobIdTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // BtnToggleDownload
@@ -52,11 +50,6 @@
             this.button1.Text = "Write Data To File";
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // JobIdTimer
-            // 
-            this.JobIdTimer.Interval = 300000;
-            this.JobIdTimer.Tick += new System.EventHandler(this.JobIdTimer_Tick);
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -74,7 +67,6 @@
 
         private System.Windows.Forms.Button BtnToggleDownload;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Timer JobIdTimer;
     }
 }
 

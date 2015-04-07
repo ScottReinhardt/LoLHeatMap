@@ -25,20 +25,22 @@ namespace LolDb
 
     internal class ApiManager
     {
-        private static readonly LoLDbContext _Db = new LoLDbContext();
         public bool Querying { get; internal set; }
 
         internal async static void SaveGameIdsToDownload(List<int> ids)
         {
             try
             {
-                var timeToStartQuerying = DateTime.Now.AddMinutes(5);
-                _Db.GameData.AddRange(ids.Select(i => new GameData
+                using (var db = new LoLDbContext())
                 {
-                    MatchToDownload = i,
-                    StartQueringTime = timeToStartQuerying,
-                }));
-                await _Db.SaveChangesAsync();
+                    var timeToStartQuerying = DateTime.Now.AddMinutes(5);
+                    db.GameData.AddRange(ids.Select(i => new GameData
+                    {
+                        MatchToDownload = i,
+                        StartQueringTime = timeToStartQuerying,
+                    }));
+                    await db.SaveChangesAsync();    
+                }
             }
             catch (Exception e)
             {
@@ -51,7 +53,13 @@ namespace LolDb
         {
             try
             {
-                return await _Db.Matches.Include(m => m.timeline).ToListAsync();
+                using (var db = new LoLDbContext())
+                {
+                    return await db.Matches.Include(
+                        m => m.timeline.frames.Select(
+                            y => y.events.Select(z => z.position))).ToListAsync();    
+                }
+                
             }
             catch (Exception e)
             {
@@ -61,11 +69,15 @@ namespace LolDb
             
         }
 
-        internal static async Task<GameData> GetRandomGameData()
+        internal static async Task<List<GameData>> GetGameDataToDownload()
         {
             try
             {
-                return await _Db.GameData.SqlQuery("SELECT * FROM dbo.GameDatas WHERE StartQueringTime < GETDATE() AND Downloaded = 0 ORDER BY NEWID()").FirstOrDefaultAsync();
+                var time = DateTime.Now;
+                using (var db = new LoLDbContext())
+                {
+                    return await db.GameData.Where(g => g.Downloaded == false && g.StartQueringTime < time).ToListAsync();
+                }
             }
             catch (Exception e)
             {
@@ -79,8 +91,12 @@ namespace LolDb
         {
             try
             {
-                _Db.Matches.Add(match);
-                await _Db.SaveChangesAsync();
+                using (var db = new LoLDbContext())
+                {
+                    db.Matches.Add(match);
+                    await db.SaveChangesAsync();
+                }
+                
             }
             catch (Exception e)
             {
@@ -91,7 +107,10 @@ namespace LolDb
 
         internal IEnumerable<Match> GetMatches()
         {
-            return _Db.Matches;
+            using (var db = new LoLDbContext())
+            {
+                return db.Matches;
+            }
         }
     }
 

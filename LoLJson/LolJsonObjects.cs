@@ -8,6 +8,8 @@ namespace LoLJson
     // ReSharper disable InconsistentNaming
     public class Position
     {
+        [Key]
+        public int Id { get; set; }
         public int EventId { get; set; }
         public int y { get; set; }
         public int x { get; set; }
@@ -15,6 +17,8 @@ namespace LoLJson
 
     public class PlayerFramePosition
     {
+        [Key]
+        public int Id { get; set; }
         public int PlayerFrameId { get; set; }
         public int y { get; set; }
         public int x { get; set; }
